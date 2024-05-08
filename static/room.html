@@ -1,0 +1,33 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enter Room</title>
+</head>
+<body>
+  <button id="enterButton">Enter</button>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+
+  <script>
+    // Connect to the WebSocket server
+    const socket = io('http://localhost:8001'); // Change the URL accordingly
+
+    // Function to handle button click event
+    function handleClick() {
+      // Generate a random room ID (you can replace this with your logic)
+      const roomId = Math.random().toString(36).substr(2, 8);
+
+      // Emit the click_button event with the room ID to the server
+      socket.emit('click_button', roomId);
+
+      // Redirect to the chatbox page
+      window.location.href = '/chatbox';
+    }
+
+    // Add event listener to the button
+    document.getElementById('enterButton').addEventListener('click', handleClick);
+  </script>
+</body>
+</html>
