@@ -2,9 +2,18 @@ import socketio
 import uvicorn
 from socketio import AsyncServer
 from fastapi import FastAPI
-fast_instance = FastAPI()
+fastapi_instance= FastAPI()
 sio = AsyncServer(cors_allowed_origins='*',async_mode='asgi')
-app = socketio.ASGIApp(sio)
+app = socketio.ASGIApp(sio,fastapi_instance)
+
+
+@sio.event
+async def communication_channel(sid,data):
+    if data:
+        print('---------------------------')
+        print(f'data received from client {sid} - {data}')
+    response = 'From server' + data
+    await sio.emit(event='receiver_from_server',data=response)
 
 @sio.event
 async def connect(sid,auth,environ):
