@@ -6,20 +6,9 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 sio = Server()
 
-app = FastAPI(sio)
+app = FastAPI()
 
 
-@app.get("/items/", response_class=HTMLResponse)
-async def read_items():
-    with open('static/room.html', 'r') as file:
-        html_content = file.read()
-    return HTMLResponse(content=html_content)
-
-@app.get('/chatbox',response_class=HTMLResponse)
-async def chatbox_page():
-    with open('static/chatbox.html', 'r') as file:
-        html_content = file.read()
-    return HTMLResponse(content=html_content)
 
 @sio.on('connect')
 def connect(sid,environ,auth):
@@ -46,5 +35,5 @@ def create_room(sid,room_id):
 
 
 if __name__ == '__main__':
-    uvicorn.run('server:app',host='127.0.0.1',port=8001,reload=True)
+    uvicorn.run('server:app',port=8001,reload=True)
 
