@@ -17,6 +17,11 @@ async def communication_channel(sid,data=None):
     print('---------------------------')
 
 
+@sio.event
+async def disconnect():
+    sio.emit(event='receiver_from_server',data = 'USER DISCONNECTED')
+
+
 
 @sio.event
 async def connect(sid,auth,environ):

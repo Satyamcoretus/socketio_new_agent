@@ -1,70 +1,62 @@
 import socketio
 import uuid
-
+from socketio import AsyncNamespace
 sio = socketio.AsyncServer(async_mode='asgi',logger=True)
 app = socketio.ASGIApp(sio)
 
+class ChatNamespace(AsyncNamespace):
+    _room_id  = None
+    _users = []
+    async def on_connect(self,sid):
+        # print('on_connect is triggered')
+        # if auth:
+        #     print(auth)
+        # if environ:
+        #     print(environ)
+        # print(f'received sid {sid} from the client')
 
-rooms = {}  # Dictionary to store room information (clients in each room)
+        await self.emit(event='message_on_client', data=f'connection successful at sid {sid}',namespace='/Chat')
+        # first check if room exits
+        if self._room_id:
+            if sid not in self._users:
+                self._users.append(sid)
+        else:
+            # create a room
+            room_id = str(uuid.uuid4())         # Generate a unique room ID
+            self._room_id = room_id
 
-@sio.event
-async def connect(sid,environ,auth):
-    print(f'Client {sid} connected')
-    if auth:
-        print(f' authentication - {auth}')
-    if environ:
-        print(f'Environ is - {environ}')
+        response = {
+            'sid': sid,
+            'message': 'Welcome to the ChatROom !',
+            'room_id': self._room_id
+        }
+        await self.emit(event='message_on_client', data=response,namespace='/Chat')
+    async def on_join(self,sid,):
+        self.enter_room(sid=sid,room=self._room_id,namespace='/Chat')
+        response = {
+            'sid' : sid,
+            'message' : 'You have been added to the room',
+            'room_id' : self._room_id
+        }
+        self.emit(event='message_on_client',data=response,namespace='/Chat')
+    async def on_message(self,sid,data):
+        # print(f"Message received from {sid}: {data}")
+        if len(self._users) == 1:
+            await self.emit(event='message_on_client', data=data, room=self._room_id,namespace='/Chat')
+        else:
+            await self.emit(event='message_on_client', data=data, room=self._room_id,skip_sid=sid,namespace='/Chat')
+
+    async def on_disconnect(self, sid):
+
+        print(f"Client disconnected: {sid}")
+    async def on_disconnect(self, sid):
+        self._users.clear()
+        print(f"Client disconnected: {sid}")
+        await self.emit(event='disconnect_message',data = 'ChatROom has been destroyed !',namespace='/Chat' )
 
 
-@sio.event
-async def create_room(sid):
-    """
-    client will create this room as soon as it will ask for the customer support in the chatbot
-    :param sid: session id
-    :return: None
-    """
-    room_id = str(uuid.uuid4())  # Generate a unique room ID
-    rooms[room_id] = {sid}  # Add the connecting client to the room
-    await sio.emit(event='room_created', data={'room_id': room_id}, to=sid)
-    print(f'Client {sid} created room: {room_id}')
 
-@sio.event
-async def join_room(sid, room_id):
-    if room_id in rooms:
-        rooms[room_id].add(sid)  # Add client to the room
-        # enter into the room
-        await sio.enter_room(sid=sid,room=room_id)
-        print(f'User [{sid}] entered the room - [{room_id}] ')
-
-        await sio.emit(event='room_joined', data={'room_id': room_id}, to=sid)
-        print(f'Client {sid} joined room: {room_id}')
-        # Broadcast a message to existing clients in the room
-
-    else:
-        await sio.emit(event='room_error', data={'message': 'Room does not exist'}, to=sid)
-        print(f'Client {sid} attempted to join non-existent room: {room_id}')
-
-@sio.event
-async def chat_message(sid, room_id, data):
-    if room_id in rooms and sid in rooms[room_id]:
-        # Broadcast the message to all clients in the room except the sender
-        await sio.emit(event='message', data=data, room=room_id, skip_sid=sid)
-        print(f'Client {sid} sent message in room {room_id}: {data}')
-    else:
-        await sio.emit(event='chat_error', data={'message': 'You are not in this room'}, to=sid)
-        print(f'Client {sid} attempted to send message in non-existent room: {room_id}')
-
-# @sio.event
-# async def disconnect(sid):
-#     # Remove the client from any rooms they were in
-#     for room_id, clients in rooms.items():
-#         if sid in clients:
-#             clients.remove(sid)
-#             if not clients:  # If the room becomes empty, remove it
-#                 del rooms[room_id]
-#             # Notify remaining clients in the room about the disconnection
-#             await sio.emit(event='user_left', data={'message': f'{sid} has left the room'}, room=room_id)
-#             print(f'Client {sid} disconnected from room: {room_id}')
+sio.register_namespace(ChatNamespace('/Chat'))
 
 if __name__ == '__main__':
     import uvicorn

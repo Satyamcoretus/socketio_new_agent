@@ -20,16 +20,19 @@ async def get_input():
 
 
 
+
 async def main():
     await client.connect('http://localhost:8001')
+    try:
+        while True:
+            message_to_send = await get_input()
 
-    while True:
-        message_to_send = await get_input()
-
-        # Send the message to the server
-        await client.emit(event='communication_channel',data =  message_to_send)
-
-        await asyncio.sleep(0.5)
+            # Send the message to the server
+            await client.emit(event='communication_channel',data =  message_to_send)
+            print('hello satyam')
+            await asyncio.sleep(0.5)
+    except KeyboardInterrupt:
+        await client.disconnect()
 
 if __name__ == "__main__":
     import asyncio

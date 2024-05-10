@@ -1,50 +1,56 @@
 import asyncio
 import socketio
-
+from room_server import ChatNamespace
 loop = asyncio.get_event_loop()
-sio = socketio.AsyncClient()
+sio = socketio.AsyncClient(logger=True,engineio_logger=True)
 
-room_id = None  # Store the current room ID
+room_id = ChatNamespace._room_id   # Store the current room ID
 
-
-async def initiator():              # It will send the first ping to the server
+# Initiator to first call the server to create the room
+async def initiator():
+    print('initiator is called')
     #emit to the server, it will generate a new room key for the client
-    await sio.emit(event='create_room')
+    await sio.emit(event='connect',namespace='/Chat')
+
+# to emit room_id to server to that server can enter the user in the room
+async def join_room():
+    print('join_room is called')
+    sio.emit(event='join',namespace='/Chat')
+
+async def get_input():
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, input, "Enter a message to send to the server: ")
+
+sio.event
+async def disconnect_message(data):
+    print(data)
 
 
+async def send_message(message):
+    await sio.emit(event='message',data=message,namespace='/Chat')
+    print(f'YOU - {message}')
 
 @sio.event
-async def room_created(data):
-    global room_id
-    room_id = data['room_id']
-    print(f'Room created: {room_id}')
-
-@sio.event
-async def room_joined(data):
-    global room_id
-    room_id = data['room_id']
-    print(f'Joined room: {room_id}')
-
-@sio.event
-async def room_error(data):
-    print(f'Error: {data["message"]}')
-
-
-# @sio.event
-# async def user_left(data):
-#     print(data['message'])
-#
-# @sio.event
-# async def message(data):
-#     print(f'{data["message"]}')
-
+async def message_on_client(data):
+    print('message on client is printed')
+    if isinstance(data,str):
+        print('AGENT-')
+        print(data)
+    else:
+        message = data.get('message')
+        print(message)
 
 
 async def main():
-    await sio.connect('http://localhost:8000')
-    await initiator()
-
-
+    await sio.connect('http://localhost:8000',namespaces='/Chat')
+    await sio.emit(event='join',namespace='/Chat')
+    while True:
+        message_to_send = await get_input()
+        # Send the message to the server
+        await send_message(message_to_send)
+        await asyncio.sleep(0.5)
+        # except KeyboardInterrupt:
+        #     await sio.disconnect()
 
 if __name__ == '__main__':
     asyncio.run(main())
