@@ -1,5 +1,4 @@
 import asyncio
-import time
 import socketio
 
 loop = asyncio.get_event_loop()
@@ -24,7 +23,7 @@ def pong_from_server(data=None):  # Set a default value of None for the data arg
         print('received pong from server (no data)')
 
 async def main():
-    await sio.connect('http://localhost:5000')
+    await sio.connect('http://192.168.0.53:5000')
     await sio.wait()
 
 
