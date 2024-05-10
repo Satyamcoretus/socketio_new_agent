@@ -2,7 +2,7 @@ import asyncio
 import socketio
 
 loop = asyncio.get_event_loop()
-sio = socketio.AsyncClient(logger=True, engineio_logger=True,reconnection_attempts=4)
+sio = socketio.AsyncClient()
 
 room_id = None  # Store the current room ID
 
@@ -12,19 +12,13 @@ async def initiator():              # It will send the first ping to the server
     await sio.emit(event='create_room')
 
 
-@sio.event
-async def connect():
-    print('Connection established')
-    await initiator()
-
-
 
 @sio.event
 async def room_created(data):
     global room_id
     room_id = data['room_id']
     print(f'Room created: {room_id}')
-#
+
 @sio.event
 async def room_joined(data):
     global room_id
@@ -47,10 +41,10 @@ async def room_error(data):
 
 
 async def main():
-    await sio.connect('http://localhost:8000',transports='polling')
-    await sio.wait()
+    await sio.connect('http://localhost:8000')
+    await initiator()
 
 
 
 if __name__ == '__main__':
-    loop.run_until_complete(main())
+    asyncio.run(main())

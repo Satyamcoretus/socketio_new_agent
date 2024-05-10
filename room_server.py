@@ -8,15 +8,21 @@ app = socketio.ASGIApp(sio)
 rooms = {}  # Dictionary to store room information (clients in each room)
 
 @sio.event
-async def connect(sid,auth,environ):
+async def connect(sid,environ,auth):
     print(f'Client {sid} connected')
     if auth:
         print(f' authentication - {auth}')
     if environ:
         print(f'Environ is - {environ}')
 
+
 @sio.event
 async def create_room(sid):
+    """
+    client will create this room as soon as it will ask for the customer support in the chatbot
+    :param sid: session id
+    :return: None
+    """
     room_id = str(uuid.uuid4())  # Generate a unique room ID
     rooms[room_id] = {sid}  # Add the connecting client to the room
     await sio.emit(event='room_created', data={'room_id': room_id}, to=sid)
