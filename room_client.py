@@ -42,7 +42,7 @@ async def message_on_client(data):
 
 
 async def main():
-    await sio.connect('http://localhost:8000',namespaces='/Chat')
+    await sio.connect('http://192.168.0.53:8000',namespaces='/Chat')
     await sio.emit(event='join',namespace='/Chat')
     while True:
         message_to_send = await get_input()

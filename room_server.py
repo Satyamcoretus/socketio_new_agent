@@ -60,4 +60,4 @@ sio.register_namespace(ChatNamespace('/Chat'))
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, port=8000)
+    uvicorn.run(app,host='192.168.0.53', port=8000)
