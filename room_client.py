@@ -21,18 +21,16 @@ async def get_input():
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, input, "Enter a message to send to the server: ")
 
-sio.event
+
+sio.event(namespace='/Chat')
 async def disconnect_message(data):
     print(data)
 
-
 async def send_message(message):
     await sio.emit(event='message',data=message,namespace='/Chat')
-    print(f'YOU - {message}')
 
-@sio.event
+@sio.event(namespace='/Chat')
 async def message_on_client(data):
-    print('message on client is printed')
     if isinstance(data,str):
         print('AGENT-')
         print(data)
@@ -43,14 +41,13 @@ async def message_on_client(data):
 
 async def main():
     await sio.connect('http://192.168.0.53:8000',namespaces='/Chat')
+    await initiator()
     await sio.emit(event='join',namespace='/Chat')
     while True:
         message_to_send = await get_input()
-        # Send the message to the server
         await send_message(message_to_send)
         await asyncio.sleep(0.5)
-        # except KeyboardInterrupt:
-        #     await sio.disconnect()
 
+#
 if __name__ == '__main__':
     asyncio.run(main())
