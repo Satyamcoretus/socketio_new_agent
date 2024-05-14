@@ -7,17 +7,17 @@ sio = socketio.AsyncServer(async_mode='asgi',logger=True)
 app = socketio.ASGIApp(sio)
 
 
-@sio.event(namespace='/Chat')
-async def connect(sid,auth,environ):
-    print('connect is triggered')
-    if auth:
-        print('auth')
-        print(auth)
-    if environ:
-        print('----------------------')
-        print('environ')
-        print(environ)
-    print(f'received sid {sid} from the client')
+# @sio.event(namespace='/Chat')
+# async def connect(sid):
+#     # print('connect is triggered')
+#     # if auth:
+#     #     print('auth')
+#     #     print(auth)
+#     # if environ:
+#     #     print('----------------------')
+#     #     print('environ')
+#     #     print(environ)
+#     print(f'received sid {sid} from the client')
 
 
 class ChatNamespace(AsyncNamespace):
@@ -62,10 +62,11 @@ class ChatNamespace(AsyncNamespace):
         self._users.clear()
         print(f"Client disconnected: {sid}")
         end_time = time.time()
-        total_time = end_time-self._start_time
-        # send time to mongodb of the chat
-        Database.initialize()
-        Database.update_agent_info(collection_name='Embeddings',time=total_time)
+        # if self._start_time is not None:
+        #     total_time = end_time-self._start_time
+        # # send time to mongodb of the chat
+        # Database.initialize()
+        # Database.update_agent_info(collection_name='Embeddings',time=total_time)
         # reset time
         self._start_time = None
         await self.emit(event='disconnect_message',data = 'ChatROom has been destroyed !',namespace='/Chat' ,room=self._room_id)
